@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Periodic Table - Google Sheet Data</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #top-bar {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        #menu {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            z-index: 100;
+        }
+
+        button {
+            color: rgba(127,255,255,0.75);
+            background: transparent;
+            outline: 1px solid rgba(127,255,255,0.75);
+            border: 0px;
+            padding: 8px 16px;
+            cursor: pointer;
+            margin: 0 4px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        button:hover {
+            background-color: rgba(0,255,255,0.5);
+            color: #fff;
+        }
+
+        button:active {
+            color: #000;
+            background-color: rgba(0,255,255,0.75);
+        }
+
+        .element {
+            width: 120px;
+            height: 160px;
+            box-shadow: 0px 0px 12px rgba(0,255,255,0.5);
+            border: 1px solid rgba(127,255,255,0.25);
+            font-family: Helvetica, Arial, sans-serif;
+            text-align: center;
+            line-height: normal;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: box-shadow 0.2s ease, border 0.2s ease;
+        }
+
+        .element:hover {
+            box-shadow: 0px 0px 20px rgba(0,255,255,0.9);
+            border: 1px solid rgba(255,255,255,0.9);
+        }
+
+        .element .number {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.75);
+        }
+
+        .element .symbol {
+            position: absolute;
+            top: 35px;
+            left: 0px;
+            right: 0px;
+            font-size: 42px;
+            font-weight: bold;
+            color: rgba(255,255,255,0.95);
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .element .details {
+            position: absolute;
+            bottom: 12px;
+            left: 0px;
+            right: 0px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.9);
+            padding: 0 6px;
+            line-height: 1.3;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS3DRenderer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+
+    <!-- Rule 2: Google Login Button Container -->
+    <div id="top-bar">
+        <div id="g_id_onload"
+             data-client_id="443821758893-fd31hslae3mfrbpaef7ed26hsjqvec1t.apps.googleusercontent.com"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
+    </div>
+
+    <div id="container"></div>
+    <div id="menu">
+        <button id="table">TABLE</button>
+        <button id="sphere">SPHERE</button>
+        <button id="helix">HELIX</button>
+        <button id="grid">GRID</button>
+    </div>
+
+    <script>
+        const tableData = [
+            { Name: "Lee Siew Suan", Photo: "", Age: 25, Country: "CN", Interest: "Writing", "Net Worth": "$251,260.80" },
+            { Name: "New Yee Chian", Photo: "", Age: 23, Country: "CN", Interest: "Cooking", "Net Worth": "$60,393.60" },
+            { Name: "Wong Thiam Fook", Photo: "", Age: 30, Country: "CN", Interest: "Traveling", "Net Worth": "$212,140.80" },
+            { Name: "Norsuzilawati Md", Photo: "", Age: 30, Country: "MY", Interest: "Painting", "Net Worth": "$208,228.80" },
+            { Name: "Norzainah Omar", Photo: "", Age: 30, Country: "MY", Interest: "Hiking", "Net Worth": "$106,555.20" },
+            { Name: "Meghandran Natham", Photo: "", Age: 31, Country: "IN", Interest: "Cooking", "Net Worth": "$139,080.00" },
+            { Name: "Joyshree Goswami", Photo: "", Age: 35, Country: "IN", Interest: "Painting", "Net Worth": "$192,278.40" },
+            { Name: "Geetha Maniam", Photo: "", Age: 27, Country: "IN", Interest: "Cooking", "Net Worth": "$90,864.00" },
+            { Name: "Abdul Rahim Osman", Photo: "", Age: 30, Country: "MY", Interest: "Cooking", "Net Worth": "$141,859.20" },
+            { Name: "Prem Anand Raj", Photo: "", Age: 44, Country: "IN", Interest: "Gardening", "Net Worth": "$196,113.60" },
+            { Name: "Piara Singh Sawarn", Photo: "", Age: 34, Country: "IN", Interest: "Writing", "Net Worth": "$207,960.00" },
+            { Name: "Othman b Abdul", Photo: "", Age: 53, Country: "MY", Interest: "Gardening", "Net Worth": "$193,200.00" },
+            { Name: "Sathiaseelan Parman", Photo: "", Age: 59, Country: "IN", Interest: "Gardening", "Net Worth": "$264,456.00" },
+            { Name: "Abdul Farid Alias", Photo: "", Age: 36, Country: "MY", Interest: "Writing", "Net Worth": "$146,592.00" },
+            { Name: "Abu Hassan Assari", Photo: "", Age: 43, Country: "MY", Interest: "Gardening", "Net Worth": "$213,657.60" },
+            { Name: "Faridah Ahmad", Photo: "", Age: 31, Country: "MY", Interest: "Writing", "Net Worth": "$271,516.80" },
+            { Name: "Muzaffar Hisham", Photo: "", Age: 35, Country: "MY", Interest: "Cooking", "Net Worth": "$230,980.80" },
+            { Name: "Isaac Cardinal", Photo: "", Age: 49, Country: "US", Interest: "Gardening", "Net Worth": "$259,252.80" },
+            { Name: "Prabunathan A/L", Photo: "", Age: 29, Country: "IN", Interest: "Writing", "Net Worth": "$271,670.40" },
+            { Name: "Taswin Zakaria", Photo: "", Age: 41, Country: "MY", Interest: "Gardening", "Net Worth": "$243,840.00" },
+            { Name: "Crystal Carter", Photo: "", Age: 35, Country: "US", Interest: "Cooking", "Net Worth": "$211,550.40" },
+            { Name: "Vivian Grapentine", Photo: "", Age: 36, Country: "CN", Interest: "Writing", "Net Worth": "$149,361.60" },
+            { Name: "Joey De Leion", Photo: "", Age: 35, Country: "US", Interest: "Hiking", "Net Worth": "$60,974.40" },
+            { Name: "Mark Feehily", Photo: "", Age: 30, Country: "US", Interest: "Cooking", "Net Worth": "$125,496.00" }
+        ];
+
+        // Rule 5: Net Worth Color Helper (<$100K Red, $100K-$200K Orange, >$200K Green)
+        function getNetWorthColor(netWorthStr) {
+            if (!netWorthStr) return 'rgba(128, 128, 128, 0.75)';
+            const worth = parseFloat(netWorthStr.replace(/[\$,]/g, '')) || 0;
+            if (worth < 100000) {
+                return 'rgba(220, 53, 69, 0.75)';   // Red (<$100K)
+            } else if (worth <= 200000) {
+                return 'rgba(255, 165, 0, 0.75)';  // Orange ($100K-$200K)
+            } else {
+                return 'rgba(40, 167, 69, 0.75)';   // Green (>$200K)
+            }
+        }
+
+        let camera, scene, renderer, controls;
+        const objects = [];
+        const targets = { table: [], sphere: [], helix: [], grid: [] };
+
+        init();
+        animate();
+
+        function init() {
+            camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.position.z = 3200;
+
+            scene = new THREE.Scene();
+
+            for (let i = 0; i < tableData.length; i++) {
+                const item = tableData[i];
+
+                const element = document.createElement('div');
+                element.className = 'element';
+                element.style.backgroundColor = getNetWorthColor(item['Net Worth']);
+
+                const number = document.createElement('div');
+                number.className = 'number';
+                number.textContent = i + 1;
+                element.appendChild(number);
+
+                const symbol = document.createElement('div');
+                symbol.className = 'symbol';
+                symbol.textContent = item.Country || 'E';
+                element.appendChild(symbol);
+
+                const details = document.createElement('div');
+                details.className = 'details';
+                details.innerHTML = '<strong>' + (item.Name || '') + '</strong><br>' + (item.Interest || '');
+                element.appendChild(details);
+
+                element.addEventListener('click', () => {
+                    alert(
+                        'Name: ' + item.Name + '\n' +
+                        'Age: ' + item.Age + '\n' +
+                        'Country: ' + item.Country + '\n' +
+                        'Interest: ' + item.Interest + '\n' +
+                        'Net Worth: ' + item['Net Worth']
+                    );
+                });
+
+                const objectCSS = new THREE.CSS3DObject(element);
+                objectCSS.position.x = Math.random() * 4000 - 2000;
+                objectCSS.position.y = Math.random() * 4000 - 2000;
+                objectCSS.position.z = Math.random() * 4000 - 2000;
+                scene.add(objectCSS);
+
+                objects.push(objectCSS);
+
+                // Rule 7: Table Arrangement (20 Columns x 10 Rows)
+                const objectTable = new THREE.Object3D();
+                const colTable = i % 20;
+                const rowTable = Math.floor(i / 20);
+                objectTable.position.x = (colTable * 140) - 1330;
+                objectTable.position.y = - (rowTable * 180) + 700;
+                targets.table.push(objectTable);
+            }
+
+            // Layout 2: Sphere
+            const vector = new THREE.Vector3();
+            for (let i = 0, l = objects.length; i < l; i++) {
+                const phi = Math.acos(-1 + (2 * i) / l);
+                const theta = Math.sqrt(l * Math.PI) * phi;
+
+                const objectSphere = new THREE.Object3D();
+                objectSphere.position.setFromSphericalCoords(750, phi, theta);
+                vector.copy(objectSphere.position).multiplyScalar(2);
+                objectSphere.lookAt(vector);
+                targets.sphere.push(objectSphere);
+            }
+
+            // Rule 8: Double Helix Layout Math
+            for (let i = 0, l = objects.length; i < l; i++) {
+                const strand = i % 2; 
+                const theta = Math.floor(i / 2) * 0.4 + (strand * Math.PI);
+                const y = - (Math.floor(i / 2) * 35) + 300;
+
+                const objectHelix = new THREE.Object3D();
+                objectHelix.position.setFromCylindricalCoords(800, theta, y);
+                vector.x = objectHelix.position.x * 2;
+                vector.y = objectHelix.position.y;
+                vector.z = objectHelix.position.z * 2;
+                objectHelix.lookAt(vector);
+                targets.helix.push(objectHelix);
+            }
+
+            // Rule 9: Grid Arrangement Math (5 Columns x 4 Rows x 10 Depth)
+            for (let i = 0; i < objects.length; i++) {
+                const colGrid = i % 5;
+                const rowGrid = Math.floor((i % 20) / 5);
+                const depthGrid = Math.floor(i / 20);
+
+                const objectGrid = new THREE.Object3D();
+                objectGrid.position.x = (colGrid * 220) - 440;
+                objectGrid.position.y = - (rowGrid * 220) + 330;
+                objectGrid.position.z = (depthGrid * 400) - 1000;
+                targets.grid.push(objectGrid);
+            }
+
+            renderer = new THREE.CSS3DRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            controls = new THREE.TrackballControls(camera, renderer.domElement);
+            controls.minDistance = 500;
+            controls.maxDistance = 6000;
+
+            transform(targets.table, 2000);
+
+            window.addEventListener('resize', onWindowResize);
+
+            document.getElementById('table').addEventListener('click', () => transform(targets.table, 2000));
+            document.getElementById('sphere').addEventListener('click', () => transform(targets.sphere, 2000));
+            document.getElementById('helix').addEventListener('click', () => transform(targets.helix, 2000));
+            document.getElementById('grid').addEventListener('click', () => transform(targets.grid, 2000));
+        }
+
+        function transform(target, duration) {
+            TWEEN.removeAll();
+
+            for (let i = 0; i < objects.length; i++) {
+                const object = objects[i];
+                const targetObject = target[i];
+
+                new TWEEN.Tween(object.position)
+                    .to({ x: targetObject.position.x, y: targetObject.position.y, z: targetObject.position.z }, Math.random() * duration + duration)
+                    .easing(TWEEN.Easing.Exponential.InOut)
+                    .start();
+
+                new TWEEN.Tween(object.rotation)
+                    .to({ x: targetObject.rotation.x, y: targetObject.rotation.y, z: targetObject.rotation.z }, Math.random() * duration + duration)
+                    .easing(TWEEN.Easing.Exponential.InOut)
+                    .start();
+            }
+
+            new TWEEN.Tween(this)
+                .to({}, duration * 2)
+                .onUpdate(render)
+                .start();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            render();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            TWEEN.update();
+            controls.update();
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
